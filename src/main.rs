@@ -51,22 +51,22 @@ impl GenExpr {
         let a: usize = random_by_value(total);
         let b: usize = total - a;
 
-        let n: usize = random_by_value(2); // 遮蔽哪个元素
+        let n: usize = random_by_value(3); // 遮蔽哪个元素
 
         let r = if random() {
             // 加法
             (
-                Value::mark(a, n == 0),
+                Value::mark(a, n == 1),
                 "+".into(),
-                Value::mark(b, n == 1),
-                Value::mark(total, n == 2),
+                Value::mark(b, n == 2),
+                Value::mark(total, n == 3),
             )
         } else {
             (
-                Value::mark(total, n == 0),
+                Value::mark(total, n == 1),
                 "-".into(),
-                Value::mark(a, n == 1),
-                Value::mark(b, n == 2),
+                Value::mark(a, n == 2),
+                Value::mark(b, n == 3),
             )
         };
 
