@@ -1,92 +1,23 @@
-use rand::{random, thread_rng, Rng};
+use gtk::prelude::{ApplicationExt, ApplicationExtManual, WidgetExt};
+use gtk::{Application, ApplicationWindow};
 
-fn random_by_value(max_value: usize) -> usize {
-    let mut rng = thread_rng();
-    rng.gen_range(1..=max_value)
-}
+fn setup_ui(app: &Application) {
+	let window = ApplicationWindow::builder()
+		.application(app)
+		.default_height(400)
+		.default_width(400)
+		.title("小学二年级加减法")
+		.build();
 
-#[derive(Debug)]
-enum Value {
-    Raw(usize),
-    Placeholder,
-}
-
-impl std::fmt::Display for Value {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Value::Raw(v) => write!(f, "{:1$}", v, 2),
-            Value::Placeholder => write!(f, "[]"),
-        }
-    }
-}
-
-impl Value {
-    fn mark(value: usize, is_mark: bool) -> Self {
-        if is_mark {
-            Self::Placeholder
-        } else {
-            Self::Raw(value)
-        }
-    }
-}
-
-#[derive(Debug)]
-struct Expr((Value, String, Value, Value));
-
-impl std::fmt::Display for Expr {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{} {} {} = {}",
-            self.0 .0, self.0 .1, self.0 .2, self.0 .3
-        )
-    }
-}
-
-struct GenExpr(usize);
-
-impl GenExpr {
-    fn gen_random(&self) -> Expr {
-        let total: usize = random_by_value(self.0);
-        let a: usize = random_by_value(total);
-        let b: usize = total - a;
-
-        let n: usize = random_by_value(3); // 遮蔽哪个元素
-
-        let r = if random() {
-            // 加法
-            (
-                Value::mark(a, n == 1),
-                "+".into(),
-                Value::mark(b, n == 2),
-                Value::mark(total, n == 3),
-            )
-        } else {
-            (
-                Value::mark(total, n == 1),
-                "-".into(),
-                Value::mark(a, n == 2),
-                Value::mark(b, n == 3),
-            )
-        };
-
-        Expr(r)
-    }
-}
-
-fn read_usize() -> usize {
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input).unwrap();
-
-    input.trim().parse().expect("请输入一个正整数")
+	window.show_all();
 }
 
 fn main() {
-    let n = read_usize();
+	let app = Application::builder()
+		.application_id("person.xgley.quagsire")
+		.build();
 
-    for _ in 0..n {
-        let gen = GenExpr(100);
-        let r = gen.gen_random();
-        println!("{r}");
-    }
+	app.connect_activate(setup_ui);
+
+	app.run();
 }
