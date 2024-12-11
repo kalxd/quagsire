@@ -7,6 +7,8 @@ fn setup_ui(app: &Application) {
 	let amount_spin_btn = SpinButton::with_range(0_f64, 100_f64, 1_f64);
 
 	let form = widget::Form::new("设置");
+	form.add_row("label 1", &Button::with_label("button 1dfsfffs"));
+	form.add_row("label 232324242432", &Button::with_label("button 2"));
 
 	let submit_btn = Button::with_label("开始做题");
 
