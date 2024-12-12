@@ -5,6 +5,7 @@ use gtk::prelude::{
 };
 use gtk::{Application, ApplicationWindow, Box as GtkBox, Button, Orientation, SpinButton};
 
+mod formula;
 mod widget;
 mod window;
 
