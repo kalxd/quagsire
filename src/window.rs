@@ -1,22 +1,10 @@
 use gtk::{
-	prelude::{BoxExt, ContainerExt, EntryExt, SizeGroupExt, WidgetExt},
-	Box as GtkBox, Entry, Label, ListBox, ListBoxRow, Orientation, ScrolledWindow, SizeGroup,
-	SizeGroupMode, Window,
+	prelude::{BoxExt, ButtonExt, ContainerExt, EntryExt, ImageExt, SizeGroupExt, WidgetExt},
+	Box as GtkBox, Button, Entry, Image, Label, ListBox, ListBoxRow, Orientation, ScrolledWindow,
+	SizeGroup, SizeGroupMode, Window,
 };
 
 use crate::formula::{Formula, Term};
-
-enum FormulaRowCheckResult {
-	Uncheck,
-	Ok,
-	Err,
-}
-
-struct FormulaRow {
-	container: ListBoxRow,
-	formula: Formula<(Entry, usize)>,
-	checkResult: FormulaRowCheckResult,
-}
 
 fn create_label(label: &str) -> Label {
 	Label::builder().label(label).width_chars(4).build()
@@ -26,11 +14,59 @@ fn create_entry() -> Entry {
 	Entry::builder().width_chars(4).build()
 }
 
+fn check_entry_with(entry: &Entry, value: &usize) -> bool {
+	let text = entry.text();
+	let n = text.trim().parse::<usize>().ok();
+	n.as_ref() == Some(value)
+}
+
+macro_rules! check_formula_field {
+	($field: expr) => {
+		let b = match $field {
+			Term::Value(_) => true,
+			Term::Placeholder((entry, value)) => check_entry_with(entry, value),
+		};
+
+		if !b {
+			return false;
+		}
+	};
+}
+
+struct FormulaRow {
+	container: ListBoxRow,
+	icon: Image,
+	formula: Formula<(Entry, usize)>,
+}
+
+impl FormulaRow {
+	fn check_formula(&self) -> bool {
+		check_formula_field!(&self.formula.lhs);
+		check_formula_field!(&self.formula.rhs);
+		check_formula_field!(&self.formula.result);
+		true
+	}
+
+	fn check(&self) -> bool {
+		let b = self.check_formula();
+		if b {
+			self.icon.set_icon_name(Some("object-select"));
+		} else {
+			self.icon.set_icon_name(Some("window-close"))
+		}
+
+		b
+	}
+}
+
 impl FormulaRow {
 	fn new(formula: Formula<usize>) -> Self {
 		let size_group = SizeGroup::builder().mode(SizeGroupMode::Horizontal).build();
 
 		let main_layout = GtkBox::builder().margin(4).spacing(2).build();
+
+		let icon = Image::builder().icon_name("starred").build();
+		main_layout.pack_end(&icon, false, false, 0);
 
 		let row = ListBoxRow::builder().child(&main_layout).build();
 		let formula: Formula<(Entry, usize)> = {
@@ -100,15 +136,14 @@ impl FormulaRow {
 
 		Self {
 			container: row,
+			icon,
 			formula,
-			checkResult: FormulaRowCheckResult::Uncheck,
 		}
 	}
 }
 
 pub struct SubWindow {
 	pub window: Window,
-	list_box: ListBox,
 }
 
 impl SubWindow {
@@ -124,23 +159,39 @@ impl SubWindow {
 		let list_box = ListBox::new();
 		scroll_window.set_child(Some(&list_box));
 
-		for _ in 0..amount {
-			let formula = Formula::new(max_value);
-			let row = FormulaRow::new(formula);
-			list_box.add(&row.container);
-		}
+		let row_list = (0..amount)
+			.into_iter()
+			.map(move |_| {
+				let formula = Formula::new(max_value);
+				FormulaRow::new(formula)
+			})
+			.collect::<Vec<_>>();
+
+		row_list.iter().for_each(|x| list_box.add(&x.container));
+
+		let check_btn = Button::builder().label("检查结果！").margin(20).build();
+		main_layout.pack_start(&check_btn, false, false, 0);
+		check_btn.connect_clicked(move |_| {
+			Self::check_list_box(&row_list);
+		});
 
 		let window = Window::builder()
-			.title("子窗口")
+			.title(format!("{max_value}以内加减法"))
 			.default_height(400)
 			.default_width(400)
 			.child(&main_layout)
 			.build();
 
-		Self { window, list_box }
+		Self { window }
 	}
 
 	pub fn show(&self) {
 		self.window.show_all();
+	}
+
+	fn check_list_box(row_list: &[FormulaRow]) {
+		for x in row_list {
+			x.check();
+		}
 	}
 }
