@@ -6,13 +6,13 @@ fn random_by_value(max_value: usize) -> usize {
 }
 
 #[derive(Debug)]
-enum FormulaOp {
+pub enum FormulaOp {
 	Add,
 	Minus,
 }
 
 impl FormulaOp {
-	const fn to_str(&self) -> &'static str {
+	pub const fn to_str(&self) -> &'static str {
 		match self {
 			Self::Add => "+",
 			Self::Minus => "-",
@@ -21,18 +21,17 @@ impl FormulaOp {
 }
 
 #[derive(Debug)]
-enum Term {
+pub enum Term<T> {
 	Value(usize),
-	Placeholder,
+	Placeholder(T),
 }
 
 #[derive(Debug)]
-pub struct Formula {
-	lhs: Term,
-	op: FormulaOp,
-	rhs: Term,
-	result: Term,
-	answer: usize,
+pub struct Formula<T> {
+	pub lhs: Term<T>,
+	pub op: FormulaOp,
+	pub rhs: Term<T>,
+	pub result: Term<T>,
 }
 
 struct RndPlaceholder {
@@ -47,32 +46,29 @@ impl RndPlaceholder {
 	}
 }
 
-impl Distribution<(Term, Term, Term, usize)> for RndPlaceholder {
-	fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> (Term, Term, Term, usize) {
+impl Distribution<(Term<usize>, Term<usize>, Term<usize>)> for RndPlaceholder {
+	fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> (Term<usize>, Term<usize>, Term<usize>) {
 		match rng.gen_range(1..=3) {
 			1 => (
-				Term::Placeholder,
+				Term::Placeholder(self.a),
 				Term::Value(self.b),
 				Term::Value(self.c),
-				self.a,
 			),
 			2 => (
 				Term::Value(self.a),
-				Term::Placeholder,
+				Term::Placeholder(self.b),
 				Term::Value(self.c),
-				self.b,
 			),
 			_ => (
 				Term::Value(self.a),
 				Term::Value(self.b),
-				Term::Placeholder,
-				self.c,
+				Term::Placeholder(self.c),
 			),
 		}
 	}
 }
 
-impl Formula {
+impl Formula<usize> {
 	pub fn new(max_value: usize) -> Self {
 		let a = random_by_value(max_value);
 		let b = random_by_value(max_value - a);
@@ -81,22 +77,20 @@ impl Formula {
 
 		if random() {
 			// 加法
-			let (x, y, z, p) = RndPlaceholder::new(a, b, c).sample(&mut rng);
+			let (x, y, z) = RndPlaceholder::new(a, b, c).sample(&mut rng);
 			Self {
 				lhs: x,
 				op: FormulaOp::Add,
 				rhs: y,
 				result: z,
-				answer: p,
 			}
 		} else {
-			let (x, y, z, p) = RndPlaceholder::new(c, a, b).sample(&mut rng);
+			let (x, y, z) = RndPlaceholder::new(c, a, b).sample(&mut rng);
 			Self {
 				lhs: x,
 				op: FormulaOp::Minus,
 				rhs: y,
 				result: z,
-				answer: p,
 			}
 		}
 	}
