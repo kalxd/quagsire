@@ -48,7 +48,7 @@ fn setup_ui(app: &Application) {
 		.application(app)
 		.default_height(200)
 		.default_width(400)
-		.title("小学二年级加减法")
+		.title("大学二年级加减法")
 		.child(&main_layout)
 		.build();
 
