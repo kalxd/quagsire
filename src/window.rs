@@ -1,6 +1,7 @@
 use gtk::{
-	prelude::{BoxExt, ContainerExt, WidgetExt},
-	Box as GtkBox, Entry, Label, ListBox, ListBoxRow, Orientation, ScrolledWindow, Window,
+	prelude::{BoxExt, ContainerExt, EntryExt, SizeGroupExt, WidgetExt},
+	Box as GtkBox, Entry, Label, ListBox, ListBoxRow, Orientation, ScrolledWindow, SizeGroup,
+	SizeGroupMode, Window,
 };
 
 use crate::formula::{Formula, Term};
@@ -17,53 +18,72 @@ struct FormulaRow {
 	checkResult: FormulaRowCheckResult,
 }
 
+fn create_label(label: &str) -> Label {
+	Label::builder().label(label).width_chars(4).build()
+}
+
+fn create_entry() -> Entry {
+	Entry::builder().width_chars(4).build()
+}
+
 impl FormulaRow {
 	fn new(formula: Formula<usize>) -> Self {
-		let main_layout = GtkBox::builder().spacing(20).build();
+		let size_group = SizeGroup::builder().mode(SizeGroupMode::Horizontal).build();
+
+		let main_layout = GtkBox::builder().margin(4).spacing(2).build();
 
 		let row = ListBoxRow::builder().child(&main_layout).build();
 		let formula: Formula<(Entry, usize)> = {
 			let lhs = match formula.lhs {
 				Term::Value(value) => {
-					let label = Label::builder().label(&value.to_string()).build();
+					let label = create_label(&value.to_string());
 					main_layout.pack_start(&label, true, false, 0);
+					size_group.add_widget(&label);
 					Term::Value(value)
 				}
 				Term::Placeholder(value) => {
-					let entry = Entry::new();
+					let entry = create_entry();
 					main_layout.pack_start(&entry, true, false, 0);
+					size_group.add_widget(&entry);
 					Term::Placeholder((entry, value))
 				}
 			};
 
 			let op = {
-				let label = Label::builder().label(formula.op.to_str()).build();
-				main_layout.pack_start(&label, false, false, 0);
+				let label = create_label(&formula.op.to_str());
+				main_layout.pack_start(&label, true, false, 0);
+				size_group.add_widget(&label);
 				formula.op
 			};
 
 			let rhs = match formula.rhs {
 				Term::Value(value) => {
-					let label = Label::builder().label(&value.to_string()).build();
+					let label = create_label(&value.to_string());
 					main_layout.pack_start(&label, true, false, 0);
+					size_group.add_widget(&label);
 					Term::Value(value)
 				}
 				Term::Placeholder(value) => {
-					let entry = Entry::new();
+					let entry = create_entry();
 					main_layout.pack_start(&entry, true, false, 0);
+					size_group.add_widget(&entry);
 					Term::Placeholder((entry, value))
 				}
 			};
 
+			let label = create_label("=");
+			main_layout.pack_start(&label, true, false, 0);
+
 			let result = match formula.result {
 				Term::Value(value) => {
-					let label = Label::builder().label(&value.to_string()).build();
+					let label = create_label(&value.to_string());
 					main_layout.pack_start(&label, true, false, 0);
 					Term::Value(value)
 				}
 				Term::Placeholder(value) => {
-					let entry = Entry::new();
+					let entry = create_entry();
 					main_layout.pack_start(&entry, true, false, 0);
+					size_group.add_widget(&entry);
 					Term::Placeholder((entry, value))
 				}
 			};
@@ -95,7 +115,7 @@ impl SubWindow {
 	pub fn new(amount: usize, max_value: usize) -> Self {
 		let main_layout = GtkBox::builder()
 			.orientation(Orientation::Vertical)
-			.spacing(4)
+			.spacing(10)
 			.build();
 
 		let scroll_window = ScrolledWindow::builder().build();
