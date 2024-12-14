@@ -2,9 +2,6 @@ use rand::{distributions::Distribution, random, thread_rng, Rng};
 
 fn random_by_value(max_value: usize) -> usize {
 	let mut rng = thread_rng();
-
-	dbg!(max_value);
-
 	rng.gen_range(0..=max_value)
 }
 
@@ -77,14 +74,10 @@ impl Distribution<(Term, Term, Term, usize)> for RndPlaceholder {
 
 impl Formula {
 	pub fn new(max_value: usize) -> Self {
-		dbg!("==== do begining ===");
-
 		let a = random_by_value(max_value);
 		let b = random_by_value(max_value - a);
 		let c = a + b;
 		let mut rng = thread_rng();
-
-		dbg!("=== do this? ===");
 
 		if random() {
 			// 加法
