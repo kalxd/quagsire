@@ -6,10 +6,17 @@ fn random_by_value(max_value: usize) -> usize {
 	rng.gen_range(0..=max_value)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, glib::Boxed)]
+#[boxed_type(name = "Op")]
 pub enum FormulaOp {
 	Add,
 	Minus,
+}
+
+impl Default for FormulaOp {
+	fn default() -> Self {
+		Self::Add
+	}
 }
 
 impl FormulaOp {
@@ -26,6 +33,12 @@ impl FormulaOp {
 pub enum Term {
 	Value(usize),
 	Placeholder(usize),
+}
+
+impl Default for Term {
+	fn default() -> Self {
+		Self::Value(Default::default())
+	}
 }
 
 #[derive(Debug)]

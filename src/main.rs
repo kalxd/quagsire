@@ -6,6 +6,7 @@ use gtk4::prelude::{
 use gtk4::{Application, ApplicationWindow, Box as GtkBox, Button, Orientation, SpinButton};
 
 mod formula;
+mod rowdata;
 mod widget;
 mod window;
 
