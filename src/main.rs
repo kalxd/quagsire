@@ -1,8 +1,13 @@
-use gtk4::prelude::{ApplicationExt, ApplicationExtManual, BoxExt, GtkWindowExt, WidgetExt};
+use gtk4::glib;
+use gtk4::prelude::{
+	ApplicationExt, ApplicationExtManual, BoxExt, ButtonExt, GtkApplicationExt, GtkWindowExt,
+	WidgetExt,
+};
 use gtk4::{Application, ApplicationWindow, Box as GtkBox, Button, Orientation, SpinButton};
 
 mod formula;
 mod widget;
+mod window;
 
 fn setup_ui(app: &Application) {
 	let main_layout = GtkBox::builder()
@@ -28,6 +33,23 @@ fn setup_ui(app: &Application) {
 
 	let submit_btn = Button::builder().label("开始做题").build();
 	main_layout.append(&submit_btn);
+	submit_btn.connect_clicked(glib::clone! {
+		#[weak]
+		amount_spinbtn,
+		#[weak]
+		max_value_spinbtn,
+		#[weak]
+		app,
+
+		move |_| {
+			let amount = amount_spinbtn.value_as_int() as usize;
+			let max_value = max_value_spinbtn.value_as_int() as usize;
+
+			let win = window::SubWindow::new(amount, max_value);
+			app.add_window(&win.window);
+			win.show();
+		}
+	});
 
 	let window = ApplicationWindow::builder()
 		.application(app)
