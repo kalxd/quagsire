@@ -13,9 +13,11 @@ fn setup_ui(app: &Application) {
 		.orientation(Orientation::Vertical)
 		.build();
 
-	let amount_spinbtn = SpinButton::builder().build();
+	let amount_spinbtn = SpinButton::with_range(1_f64, 1000_f64, 1_f64);
+	amount_spinbtn.set_value(10_f64);
 
-	let max_value_spinbtn = SpinButton::builder().build();
+	let max_value_spinbtn = SpinButton::with_range(1_f64, 1000_f64, 1_f64);
+	max_value_spinbtn.set_value(100_f64);
 
 	let form = widget::Form::new("设置");
 	form.container.set_vexpand(true);
