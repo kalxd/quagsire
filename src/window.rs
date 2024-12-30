@@ -1,12 +1,54 @@
 use gtk4::prelude::{BoxExt, Cast, GtkWindowExt};
-use gtk4::{gio, glib, Widget};
 use gtk4::{
 	Box as GtkBox, Button, Entry, Image, Label, ListBox, ListBoxRow, Orientation, ScrolledWindow,
-	SizeGroup, SizeGroupMode, Window,
+	SizeGroup, SizeGroupMode, Widget, Window,
 };
 
-use crate::formula::{Formula, Term};
+use crate::formula::Term;
 use crate::rowdata::{FormulaModel, FormulaObj};
+
+macro_rules! term_widget {
+	($obj: ident, $path: ident, $box: ident, $size_group: ident) => {
+		match $obj.$path() {
+			Term::Value(lbl) => {
+				let label = Label::builder()
+					.width_chars(4)
+					.label(lbl.to_string().as_str())
+					.build();
+				$box.append(&label);
+				$size_group.add_widget(&label);
+			}
+			Term::Placeholder(_) => {
+				let entry = Entry::builder().width_chars(4).max_length(4).build();
+				$box.append(&entry);
+				$size_group.add_widget(&entry);
+			}
+		}
+	};
+}
+
+struct FormualRow {
+	container: ListBoxRow,
+}
+
+impl FormualRow {
+	fn new(size_group: &SizeGroup, item: &FormulaObj) -> Self {
+		let main_layout = GtkBox::builder().spacing(10).build();
+		term_widget!(item, rhs, main_layout, size_group);
+		{
+			let op = item.op().to_str();
+			let label = Label::builder().width_chars(4).label(op).build();
+			main_layout.append(&label);
+			size_group.add_widget(&label);
+		}
+		term_widget!(item, lhs, main_layout, size_group);
+		term_widget!(item, result, main_layout, size_group);
+
+		let container = ListBoxRow::builder().child(&main_layout).build();
+
+		Self { container }
+	}
+}
 
 pub struct SubWindow {
 	// model: FormulaModel,
@@ -30,11 +72,14 @@ impl SubWindow {
 			.build();
 		main_layout.append(&scroll_window);
 
+		let size_group = SizeGroup::new(SizeGroupMode::Horizontal);
+
 		let formula_model = FormulaModel::with_opt(amount, max_value);
 		let list_box = ListBox::new();
 		list_box.bind_model(Some(&formula_model), move |o| {
-			let f = o.downcast_ref::<FormulaObj>().expect("failed");
-			Label::new(Some(&f.op().to_str())).upcast::<Widget>()
+			let fo = o.downcast_ref::<FormulaObj>().expect("failed");
+			let row = FormualRow::new(&size_group, fo);
+			row.container.upcast::<Widget>()
 		});
 		scroll_window.set_child(Some(&list_box));
 
