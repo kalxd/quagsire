@@ -1,3 +1,4 @@
+use gtk4::glib;
 use rand::{distributions::Distribution, random, thread_rng, Rng};
 
 fn random_by_value(max_value: usize) -> usize {
@@ -20,18 +21,19 @@ impl FormulaOp {
 	}
 }
 
-#[derive(Debug)]
-pub enum Term<T> {
+#[derive(Debug, Clone, glib::Boxed)]
+#[boxed_type(name = "Term")]
+pub enum Term {
 	Value(usize),
-	Placeholder(T),
+	Placeholder(usize),
 }
 
 #[derive(Debug)]
-pub struct Formula<T> {
-	pub lhs: Term<T>,
+pub struct Formula {
+	pub lhs: Term,
 	pub op: FormulaOp,
-	pub rhs: Term<T>,
-	pub result: Term<T>,
+	pub rhs: Term,
+	pub result: Term,
 }
 
 struct RndPlaceholder {
@@ -46,8 +48,8 @@ impl RndPlaceholder {
 	}
 }
 
-impl Distribution<(Term<usize>, Term<usize>, Term<usize>)> for RndPlaceholder {
-	fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> (Term<usize>, Term<usize>, Term<usize>) {
+impl Distribution<(Term, Term, Term)> for RndPlaceholder {
+	fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> (Term, Term, Term) {
 		match rng.gen_range(1..=3) {
 			1 => (
 				Term::Placeholder(self.a),
@@ -68,7 +70,7 @@ impl Distribution<(Term<usize>, Term<usize>, Term<usize>)> for RndPlaceholder {
 	}
 }
 
-impl Formula<usize> {
+impl Formula {
 	pub fn new(max_value: usize) -> Self {
 		let a = random_by_value(max_value);
 		let b = random_by_value(max_value - a);

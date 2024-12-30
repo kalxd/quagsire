@@ -1,6 +1,7 @@
 use gtk4::prelude::{ApplicationExt, ApplicationExtManual, BoxExt, GtkWindowExt, WidgetExt};
 use gtk4::{Application, ApplicationWindow, Box as GtkBox, Button, Orientation, SpinButton};
 
+mod formula;
 mod widget;
 
 fn setup_ui(app: &Application) {
