@@ -11,15 +11,12 @@ macro_rules! term_widget {
 	($obj: ident, $path: ident, $box: ident, $size_group: ident) => {
 		match $obj.$path() {
 			Term::Value(lbl) => {
-				let label = Label::builder()
-					.width_chars(4)
-					.label(lbl.to_string().as_str())
-					.build();
+				let label = Label::builder().label(lbl.to_string().as_str()).build();
 				$box.append(&label);
 				$size_group.add_widget(&label);
 			}
 			Term::Placeholder(_) => {
-				let entry = Entry::builder().width_chars(4).max_length(4).build();
+				let entry = Entry::builder().build();
 				$box.append(&entry);
 				$size_group.add_widget(&entry);
 			}
@@ -34,14 +31,14 @@ struct FormualRow {
 impl FormualRow {
 	fn new(size_group: &SizeGroup, item: &FormulaObj) -> Self {
 		let main_layout = GtkBox::builder().spacing(10).build();
-		term_widget!(item, rhs, main_layout, size_group);
+		term_widget!(item, lhs, main_layout, size_group);
 		{
 			let op = item.op().to_str();
 			let label = Label::builder().width_chars(4).label(op).build();
 			main_layout.append(&label);
 			size_group.add_widget(&label);
 		}
-		term_widget!(item, lhs, main_layout, size_group);
+		term_widget!(item, rhs, main_layout, size_group);
 		term_widget!(item, result, main_layout, size_group);
 
 		let container = ListBoxRow::builder().child(&main_layout).build();
