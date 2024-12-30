@@ -1,7 +1,7 @@
-use gtk4::{
-	prelude::{ApplicationExt, ApplicationExtManual, BoxExt, GtkWindowExt},
-	Application, ApplicationWindow, Box as GtkBox, Button, Orientation,
-};
+use gtk4::prelude::{ApplicationExt, ApplicationExtManual, BoxExt, GtkWindowExt, WidgetExt};
+use gtk4::{Application, ApplicationWindow, Box as GtkBox, Button, Orientation, SpinButton};
+
+mod widget;
 
 fn setup_ui(app: &Application) {
 	let main_layout = GtkBox::builder()
@@ -12,6 +12,16 @@ fn setup_ui(app: &Application) {
 		.margin_top(20)
 		.orientation(Orientation::Vertical)
 		.build();
+
+	let amount_spinbtn = SpinButton::builder().build();
+
+	let max_value_spinbtn = SpinButton::builder().build();
+
+	let form = widget::Form::new("设置");
+	form.container.set_vexpand(true);
+	main_layout.append(&form.container);
+	form.add_row("题目数量", &amount_spinbtn);
+	form.add_row("最大值", &max_value_spinbtn);
 
 	let submit_btn = Button::builder().label("开始做题").build();
 	main_layout.append(&submit_btn);

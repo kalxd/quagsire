@@ -1,6 +1,6 @@
-use gtk::glib::object::IsA;
-use gtk::prelude::{BoxExt, SizeGroupExt};
-use gtk::{Box as GtkBox, Frame, Label, Orientation, SizeGroup, SizeGroupMode, Widget};
+use gtk4::glib::object::IsA;
+use gtk4::prelude::{BoxExt, WidgetExt};
+use gtk4::{Box as GtkBox, Frame, Label, Orientation, SizeGroup, SizeGroupMode, Widget};
 
 pub struct Form {
 	pub container: Frame,
@@ -11,12 +11,17 @@ pub struct Form {
 
 impl Form {
 	pub fn new(title: &str) -> Self {
-		let main_layout = GtkBox::builder().orientation(Orientation::Vertical).build();
+		let main_layout = GtkBox::builder()
+			.orientation(Orientation::Vertical)
+			.spacing(10)
+			.margin_start(10)
+			.margin_end(10)
+			.build();
 
 		let frame = Frame::builder().label(title).child(&main_layout).build();
 
-		let label_size_group = SizeGroup::builder().mode(SizeGroupMode::Horizontal).build();
-		let widget_size_group = SizeGroup::builder().mode(SizeGroupMode::Horizontal).build();
+		let label_size_group = SizeGroup::new(SizeGroupMode::Horizontal);
+		let widget_size_group = SizeGroup::new(SizeGroupMode::Horizontal);
 
 		Self {
 			container: frame,
@@ -26,21 +31,19 @@ impl Form {
 		}
 	}
 
-	pub fn add_row<W: IsA<Widget>>(&self, label: &str, widget: &W) {
-		let layout = GtkBox::builder().build();
+	pub fn add_row<W: IsA<Widget> + WidgetExt>(&self, label: &str, widget: &W) {
+		let layout = GtkBox::builder().spacing(20).build();
 
-		let label = Label::builder()
-			.xalign(0_f32)
-			.expand(true)
-			.label(label)
-			.build();
+		let label = Label::builder().xalign(0_f32).label(label).build();
 
 		self.label_size_group.add_widget(&label);
+
+		widget.set_hexpand(true);
 		self.widget_size_group.add_widget(widget);
 
-		layout.pack_start(&label, false, true, 10);
-		layout.pack_start(widget, true, true, 10);
+		layout.append(&label);
+		layout.append(widget);
 
-		self.main_layout.pack_end(&layout, false, false, 10);
+		self.main_layout.append(&layout);
 	}
 }
