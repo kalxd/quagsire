@@ -7,7 +7,7 @@ fn random_by_value(max_value: usize) -> usize {
 }
 
 #[derive(Debug, Clone, glib::Boxed)]
-#[boxed_type(name = "Op")]
+#[boxed_type(name = "FormulaOp")]
 pub enum FormulaOp {
 	Add,
 	Minus,
