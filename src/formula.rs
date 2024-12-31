@@ -28,17 +28,10 @@ impl FormulaOp {
 	}
 }
 
-#[derive(Debug, Clone, glib::Boxed)]
-#[boxed_type(name = "Term")]
+#[derive(Debug, Clone)]
 pub enum Term {
 	Value(usize),
 	Placeholder(usize),
-}
-
-impl Default for Term {
-	fn default() -> Self {
-		Self::Value(Default::default())
-	}
 }
 
 #[derive(Debug)]

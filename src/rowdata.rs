@@ -1,13 +1,42 @@
+use crate::formula::{Formula, Term};
+use gtk4::{
+	glib::{self, Object},
+	prelude::ListModelExt,
+	subclass::prelude::ObjectSubclassIsExt,
+};
+
+#[derive(Clone, glib::Boxed)]
+#[boxed_type(name = "TermAttr")]
+pub enum TermAttr {
+	Value(usize),
+	Placeholder((usize, Option<usize>)),
+}
+
+impl Default for TermAttr {
+	fn default() -> Self {
+		Self::Value(Default::default())
+	}
+}
+
+impl From<Term> for TermAttr {
+	fn from(value: Term) -> Self {
+		match value {
+			Term::Value(x) => Self::Value(x),
+			Term::Placeholder(x) => Self::Placeholder((x, None)),
+		}
+	}
+}
+
 mod term_imp {
-	use crate::formula::Term;
+	use super::TermAttr;
 	use gtk4::glib::{self, prelude::*, subclass::prelude::*};
 	use std::cell::RefCell;
 
 	#[derive(Default, glib::Properties)]
 	#[properties(wrapper_type = super::TermObj)]
 	pub struct InnerTerm {
-		#[property(get, set, type = Term)]
-		term: RefCell<Term>,
+		#[property(get, set, type = TermAttr)]
+		term: RefCell<TermAttr>,
 	}
 
 	#[glib::derived_properties]
@@ -20,22 +49,29 @@ mod term_imp {
 	}
 }
 
+glib::wrapper! {
+	pub struct TermObj(ObjectSubclass<term_imp::InnerTerm>);
+}
+
 mod formula_imp {
-	use crate::formula::{FormulaOp, Term};
+	use super::TermAttr;
+	use crate::formula::FormulaOp;
 	use gtk4::glib::{self, prelude::*, subclass::prelude::*};
 	use std::cell::RefCell;
 
 	#[derive(Default, glib::Properties)]
 	#[properties(wrapper_type = super::FormulaObj)]
 	pub struct InnerFormula {
-		#[property(get, set, type = Term)]
-		lhs: RefCell<Term>,
+		#[property(get, set, type = TermAttr)]
+		lhs: RefCell<TermAttr>,
 		#[property(get, set, type = FormulaOp)]
 		op: RefCell<FormulaOp>,
-		#[property(get, set, type= Term)]
-		rhs: RefCell<Term>,
-		#[property(get, set, type = Term)]
-		result: RefCell<Term>,
+		#[property(get, set, type= TermAttr)]
+		rhs: RefCell<TermAttr>,
+		#[property(get, set, type = TermAttr)]
+		result: RefCell<TermAttr>,
+		#[property(get, set, type = super::FormulaAction)]
+		action: RefCell<super::FormulaAction>,
 	}
 
 	#[glib::derived_properties]
@@ -87,20 +123,13 @@ mod model_imp {
 	}
 }
 
-use crate::formula::{Formula, Term};
-use gtk4::{
-	glib::{self, Object},
-	subclass::prelude::ObjectSubclassIsExt,
-};
-
-glib::wrapper! {
-	pub struct TermObj(ObjectSubclass<term_imp::InnerTerm>);
-}
-
-impl TermObj {
-	fn new(term: Term) -> Self {
-		Object::builder().property("term", term).build()
-	}
+#[derive(Debug, Clone, Default, Copy, glib::Boxed)]
+#[boxed_type(name = "FormulaResult")]
+pub enum FormulaAction {
+	#[default]
+	Uncheck,
+	Pass,
+	Fail,
 }
 
 glib::wrapper! {
@@ -110,10 +139,11 @@ glib::wrapper! {
 impl FormulaObj {
 	fn new(formula: Formula) -> Self {
 		Object::builder()
-			.property("lhs", formula.lhs)
+			.property("lhs", TermAttr::from(formula.lhs))
 			.property("op", formula.op)
-			.property("rhs", formula.rhs)
-			.property("result", formula.result)
+			.property("rhs", TermAttr::from(formula.rhs))
+			.property("result", TermAttr::from(formula.result))
+			.property("action", FormulaAction::default())
 			.build()
 	}
 }
@@ -121,6 +151,27 @@ impl FormulaObj {
 glib::wrapper! {
 	pub struct FormulaModel(ObjectSubclass<model_imp::InnerModel>)
 		@implements gtk4::gio::ListModel;
+}
+
+macro_rules! check_term {
+	($e: expr) => {
+		let b = match $e {
+			TermAttr::Value(_) => true,
+			TermAttr::Placeholder((a, b)) => Some(a) == b,
+		};
+
+		if !b {
+			return false;
+		}
+	};
+}
+
+fn check_formula(f: &FormulaObj) -> bool {
+	check_term!(f.lhs());
+	check_term!(f.rhs());
+	check_term!(f.result());
+
+	true
 }
 
 impl FormulaModel {
@@ -137,5 +188,23 @@ impl FormulaModel {
 		imp.0.replace(formula);
 
 		o
+	}
+
+	pub fn refresh(&self) {
+		for i in 0..self.n_items() {
+			self.items_changed(i, 1, 1);
+		}
+	}
+
+	pub fn check_result(&self) {
+		for x in self.imp().0.borrow_mut().iter_mut() {
+			if check_formula(x) {
+				x.set_action(FormulaAction::Pass);
+			} else {
+				x.set_action(FormulaAction::Fail);
+			}
+		}
+
+		self.refresh();
 	}
 }

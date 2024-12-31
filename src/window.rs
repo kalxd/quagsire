@@ -1,24 +1,38 @@
-use gtk4::prelude::{BoxExt, Cast, GtkWindowExt};
+use gtk4::glib;
+use gtk4::prelude::{BoxExt, ButtonExt, Cast, EditableExt, GtkWindowExt};
 use gtk4::{
 	Box as GtkBox, Button, Entry, Image, Label, ListBox, ListBoxRow, Orientation, ScrolledWindow,
 	SizeGroup, SizeGroupMode, Widget, Window,
 };
 
-use crate::formula::Term;
-use crate::rowdata::{FormulaModel, FormulaObj};
+use crate::rowdata::{FormulaAction, FormulaModel, FormulaObj, TermAttr};
 
 macro_rules! term_widget {
-	($obj: ident, $path: ident, $box: ident, $size_group: ident) => {
-		match $obj.$path() {
-			Term::Value(lbl) => {
+	($obj: ident, $get_path: ident, $set_path: ident, $box: ident, $size_group: ident) => {
+		match $obj.$get_path() {
+			TermAttr::Value(lbl) => {
 				let label = Label::builder().label(lbl.to_string().as_str()).build();
 				$box.append(&label);
 				$size_group.add_widget(&label);
 			}
-			Term::Placeholder(_) => {
+			TermAttr::Placeholder((a, b)) => {
 				let entry = Entry::builder().build();
+				if let Some(b) = b {
+					entry.set_text(b.to_string().as_str());
+				}
+
 				$box.append(&entry);
 				$size_group.add_widget(&entry);
+
+				entry.connect_changed(glib::clone! {
+					#[weak]
+					$obj,
+					move |entry| {
+						let value = entry.text();
+						let n = value.trim().parse::<usize>().ok();
+						$obj.$set_path(TermAttr::Placeholder((a, n)));
+					}
+				});
 			}
 		}
 	};
@@ -30,16 +44,34 @@ struct FormualRow {
 
 impl FormualRow {
 	fn new(size_group: &SizeGroup, item: &FormulaObj) -> Self {
-		let main_layout = GtkBox::builder().spacing(10).build();
-		term_widget!(item, lhs, main_layout, size_group);
+		let main_layout = GtkBox::builder()
+			.margin_start(10)
+			.margin_end(10)
+			.spacing(10)
+			.build();
+		term_widget!(item, lhs, set_lhs, main_layout, size_group);
 		{
 			let op = item.op().to_str();
 			let label = Label::builder().width_chars(4).label(op).build();
 			main_layout.append(&label);
 			size_group.add_widget(&label);
 		}
-		term_widget!(item, rhs, main_layout, size_group);
-		term_widget!(item, result, main_layout, size_group);
+		term_widget!(item, rhs, set_rhs, main_layout, size_group);
+		{
+			let label = Label::builder().label("=").build();
+			main_layout.append(&label);
+		}
+		term_widget!(item, result, set_result, main_layout, size_group);
+		{
+			let image_name = match item.action() {
+				FormulaAction::Uncheck => "starred",
+				FormulaAction::Fail => "window-close",
+				FormulaAction::Pass => "object-select",
+			};
+
+			let icon = Image::builder().icon_name(image_name).build();
+			main_layout.append(&icon);
+		}
 
 		let container = ListBoxRow::builder().child(&main_layout).build();
 
@@ -48,7 +80,6 @@ impl FormualRow {
 }
 
 pub struct SubWindow {
-	// model: FormulaModel,
 	pub window: Window,
 }
 
@@ -88,6 +119,13 @@ impl SubWindow {
 			.margin_top(20)
 			.build();
 		main_layout.append(&check_btn);
+		check_btn.connect_clicked(glib::clone! {
+			#[weak]
+			formula_model,
+			move |_| {
+				formula_model.check_result();
+			}
+		});
 
 		let window = Window::builder()
 			.title(format!("{max_value}以内加减法"))
