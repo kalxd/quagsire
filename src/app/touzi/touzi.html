@@ -1,1 +1,22 @@
-<p>touzi works!</p>
+<div>
+	<div *task="let result from result$">
+		<div class="touzi box">
+			<div class="item">
+				{{ result.a }}
+			</div>
+
+			<div class="item">
+				{{ result.b }}
+			</div>
+		</div>
+
+		<div class="touzi result">
+			<label>
+				总点数
+				<b>{{ result.a + result.b }}</b>
+			</label>
+		</div>
+
+		<button class="touzi button" (click)="startTouzi()">投一个！</button>
+	</div>
+</div>

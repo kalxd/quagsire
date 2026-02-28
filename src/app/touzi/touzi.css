@@ -1,0 +1,20 @@
+.touzi.box {
+	display: flex;
+	justify-items: center;
+}
+
+.touzi.box > .item {
+	border: 1px solid blue;
+	padding: 1rem;
+	flex-grow: 1;
+	text-align: center;
+	height: 50%;
+}
+
+.touzi.result {
+	text-align: center;
+}
+
+.touzi.button {
+	width: 100%;
+}
