@@ -28,7 +28,7 @@ export class Touzi {
 				ActionResult.exhaustMap(_ => {
 					const a = rand();
 					const b = rand();
-					return R.timer(1000).pipe(R.map(_ => ({ a, b })));
+					return R.timer(200).pipe(R.map(_ => ({ a, b })));
 				}),
 				R.startWith(ActionResult.Ok({
 					a: 0,
