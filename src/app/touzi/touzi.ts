@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ActionResult, UiTaskDirective } from "drifloon";
+import { ActionResult, UiContainer, UiTaskDirective } from "drifloon";
 import * as R from "rxjs";
 
 const rand = (): number => {
@@ -12,10 +12,10 @@ interface TouziResult {
 }
 
 @Component({
-  selector: 'app-touzi',
-  imports: [UiTaskDirective],
-  templateUrl: './touzi.html',
-  styleUrl: './touzi.css',
+	selector: 'app-touzi',
+	imports: [UiTaskDirective, UiContainer],
+	templateUrl: './touzi.html',
+	styleUrl: './touzi.css',
 })
 export class Touzi {
 	protected result$: R.Observable<ActionResult<TouziResult>>;

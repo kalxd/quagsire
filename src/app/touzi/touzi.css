@@ -1,6 +1,7 @@
 .touzi.box {
 	display: flex;
 	justify-items: center;
+	margin-top: 3rem;
 }
 
 .touzi.box > .item {
@@ -9,12 +10,18 @@
 	flex-grow: 1;
 	text-align: center;
 	height: 50%;
+	font-size: 4rem;
 }
 
 .touzi.result {
 	text-align: center;
+	border: 1px solid blue;
+	font-size: 4rem;
+	margin-top: 1rem;
 }
 
 .touzi.button {
 	width: 100%;
+	font-size: 2rem;
+	margin-top: 1rem;
 }
